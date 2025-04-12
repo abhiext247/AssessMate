@@ -18,16 +18,16 @@
 - **Authentication**: JWT (JSON Web Tokens) + bcrypt  
 - **State Management**: Context API  
 
-![AssessMate Screenshot](frontend/src/assets/chat_ss1.png)
-![AssessMate Screenshot](frontend/src/assets/chat_ss2.png)
-![AssessMate Screenshot](frontend/src/assets/chat_ss3.png)
-![AssessMate Screenshot](frontend/src/assets/chat_ss4.png)
-![AssessMate Screenshot](frontend/src/assets/chat_ss5.png)
-![AssessMate Screenshot](frontend/src/assets/chat_ss6.png)
-![AssessMate Screenshot](frontend/src/assets/chat_ss7.png)
-![AssessMate Screenshot](frontend/src/assets/chat_ss8.png)
-![AssessMate Screenshot](frontend/src/assets/chat_ss9.png)
-![AssessMate Screenshot](frontend/src/assets/chat_ss10.png)
+![AssessMate Screenshot](./frontend/src/assets/chat_ss1.png)
+![AssessMate Screenshot](./frontend/src/assets/chat_ss2.png)
+![AssessMate Screenshot](./frontend/src/assets/chat_ss3.png)
+![AssessMate Screenshot](./frontend/src/assets/chat_ss4.png)
+![AssessMate Screenshot](./frontend/src/assets/chat_ss5.png)
+![AssessMate Screenshot](./frontend/src/assets/chat_ss6.png)
+![AssessMate Screenshot](./frontend/src/assets/chat_ss7.png)
+![AssessMate Screenshot](./frontend/src/assets/chat_ss8.png)
+![AssessMate Screenshot](./frontend/src/assets/chat_ss9.png)
+![AssessMate Screenshot](./frontend/src/assets/chat_ss10.png)
 
 ## 📁 Folder Structure  
 ```
