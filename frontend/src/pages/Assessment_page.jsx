@@ -3,143 +3,111 @@ import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
 import { submitResponse } from "../services/responseService";
+import { ClockIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 
 const AssessmentPage = () => {
-  const { selectedAssessment, token, } = useContext(AuthContext);
-  const [started, setStarted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(selectedAssessment?.timeLimit * 60 || 0);
-  const [answers, setAnswers] = useState([]);
-  const [submitted, setSubmitted] = useState(false);
-  const [score, setScore] = useState(null);
-  const navigate = useNavigate();
+  
+  const { selectedAssessment, token } = useContext(AuthContext);
+  
 
-  useEffect(() => {
-    let timer;
-    if (started && timeLeft > 0) {
-      timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-    } else if (timeLeft === 0 && started) {
-      handleSubmit();
-    }
-    return () => clearInterval(timer);
-  }, [started, timeLeft]);
-
-  const handleStart = () => {
-    setStarted(true);
-    setAnswers(selectedAssessment.questions.map(q => ({ questionId: q._id, selectedOption: "" })));
+  if (!selectedAssessment) return (
+     <div className="text-center py-20">
+        <p className="text-xl text-slate-600">No assessment selected.</p>
+        <button onClick={() => navigate('/student-dashboard')} className="mt-4 bg-indigo-600 text-white py-2 px-4 rounded-lg">Back to Dashboard</button>
+     </div>
+  );
+  
+  
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
-
-  const handleOptionChange = (questionId, option) => {
-    setAnswers(prev => prev.map(ans => ans.questionId === questionId ? { ...ans, selectedOption: option } : ans));
-  };
-
-  const handleSubmit = async () => {
-    if (submitted) return;
-
-    const correctAnswers = selectedAssessment.questions.reduce((acc, q) => {
-      const userAnswer = answers.find(ans => ans.questionId === q._id);
-      return acc + (userAnswer?.selectedOption === q.correctAnswer ? 1 : 0);
-    }, 0);
-
-    const finalScore = ((correctAnswers / selectedAssessment.questions.length) * 100).toFixed(2);
-    setScore(finalScore);
-    setSubmitted(true);
-
-    try {
-      const assessmentId = selectedAssessment._id;
-      await submitResponse(assessmentId, answers,finalScore, token);
-    } catch (error) {
-      console.error("Submission Error:", error);
-    }
-  };
-
-  if (!selectedAssessment) return <p className="text-center text-gray-600">No assessment selected.</p>;
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white shadow-lg rounded-lg">
-      {!submitted ? (
-        <>
-          <h2 className="text-2xl font-bold mb-2">{selectedAssessment.title}</h2>
-          <p className="text-gray-700">{selectedAssessment.description}</p>
-          <p className="text-red-500 font-semibold">Time Limit: {selectedAssessment.timeLimit} min</p>
-
-          {!started ? (
-            <button
-              onClick={handleStart}
-              className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
-            >
-              Start Assessment
-            </button>
-          ) : (
-            <div>
-              <p className="text-red-600 font-bold text-lg">
-                Time Left: {Math.floor(timeLeft / 60)}:{timeLeft % 60}
-              </p>
-
-              {selectedAssessment.questions.map((q, index) => (
-                <div key={q._id} className="border-b py-4">
-                  <p className="font-semibold">{index + 1}. {q.questionText}</p>
-                  <div className="mt-2 space-y-2">
-                    {q.options.map((option, idx) => (
-                      <label
-                        key={idx}
-                        className={`flex items-center space-x-2 cursor-pointer px-4 py-2 rounded-md transition ${
-                          answers.find(ans => ans.questionId === q._id)?.selectedOption === option
-                            ? "bg-blue-100 border border-blue-500"
-                            : "bg-gray-100 border border-gray-300 hover:bg-gray-200"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name={`question-${q._id}`}
-                          value={option}
-                          checked={answers.find(ans => ans.questionId === q._id)?.selectedOption === option}
-                          onChange={() => handleOptionChange(q._id, option)}
-                          className="hidden"
-                        />
-                        <div
-                          className={`w-5 h-5 flex justify-center items-center rounded-full border-2 ${
-                            answers.find(ans => ans.questionId === q._id)?.selectedOption === option
-                              ? "border-blue-500 bg-blue-500"
-                              : "border-gray-400 bg-white"
-                          }`}
-                        >
-                          {answers.find(ans => ans.questionId === q._id)?.selectedOption === option && (
-                            <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
-                          )}
-                        </div>
-                        <span className="text-gray-800">{option}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              <button
-                onClick={handleSubmit}
-                className="mt-4 bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition"
-              >
-                Submit Assessment
-              </button>
+    <div className="bg-slate-50 min-h-screen p-4 sm:p-6 md:p-8">
+      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-200">
+        {!submitted ? (
+          <div className="p-6 md:p-8">
+            {/* Assessment Header */}
+            <div className="border-b pb-4 mb-6">
+              <h2 className="text-3xl font-bold text-slate-800">{selectedAssessment.title}</h2>
+              <p className="text-slate-500 mt-1">{selectedAssessment.description}</p>
             </div>
-          )}
-        </>
-      ) : (
-        <div className="text-center bg-green-100 p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold text-green-700">🎉 Congratulations! 🎉</h2>
-          <p className="text-lg text-gray-700 mt-2">You have successfully submitted your assessment.</p>
-          <div className="mt-4 bg-white p-4 rounded shadow">
-            <p className="text-lg font-semibold text-gray-800">📌 {selectedAssessment.title}</p>
-            <p className="text-gray-600">⏳ Time Limit: {selectedAssessment.timeLimit} min</p>
-            <p className="text-lg font-bold text-blue-600 mt-2">💯 Your Score: {score}/100</p>
+
+            {!started ? (
+              <div className="text-center py-10">
+                <p className="text-lg font-semibold text-red-600 flex items-center justify-center gap-2 mb-6"><ClockIcon className="w-6 h-6"/> Time Limit: {selectedAssessment.timeLimit} minutes</p>
+                <button
+                  onClick={handleStart}
+                  className="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-indigo-700 transition-transform hover:scale-105"
+                >
+                  Start Assessment
+                </button>
+              </div>
+            ) : (
+              <div>
+                {/* Sticky Timer */}
+                <div className="sticky top-0 bg-white/80 backdrop-blur-sm py-3 mb-6 border-b z-10">
+                    <p className="text-center text-2xl font-bold text-red-600 animate-pulse">
+                      Time Left: {formatTime(timeLeft)}
+                    </p>
+                </div>
+                
+                {/* Questions */}
+                <div className="space-y-8">
+                  {selectedAssessment.questions.map((q, index) => (
+                    <div key={q._id} className="bg-slate-50 p-6 rounded-lg border">
+                      <p className="font-semibold text-lg text-slate-800">{index + 1}. {q.questionText}</p>
+                      <div className="mt-4 space-y-3">
+                        {q.options.map((option, idx) => (
+                          <label key={idx} className={`flex items-center gap-3 cursor-pointer p-4 rounded-lg border-2 transition-all ${
+                              answers.find(a => a.questionId === q._id)?.selectedOption === option
+                                ? 'bg-indigo-100 border-indigo-500 shadow-inner'
+                                : 'bg-white border-slate-300 hover:border-indigo-400'
+                          }`}>
+                            <input type="radio" name={`question-${q._id}`} value={option} onChange={() => handleOptionChange(q._id, option)} className="hidden" />
+                            <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                answers.find(a => a.questionId === q._id)?.selectedOption === option ? 'border-indigo-600 bg-indigo-600' : 'border-slate-400'
+                            }`}>
+                               {answers.find(a => a.questionId === q._id)?.selectedOption === option && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                            </span>
+                            <span className="text-slate-700">{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={handleSubmit}
+                  className="mt-8 w-full bg-green-600 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-green-700 transition"
+                >
+                  Submit Assessment
+                </button>
+              </div>
+            )}
           </div>
-          <button
-            onClick={() => navigate("/student-dashboard")}
-            className="mt-6 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
-          >
-            Back to Assessments
-          </button>
-        </div>
-      )}
+        ) : (
+          
+          <div className="text-center p-10">
+            <CheckCircleIcon className="w-20 h-20 text-green-500 mx-auto animate-pulse" />
+            <h2 className="text-3xl font-bold text-slate-800 mt-4">Submission Successful!</h2>
+            <p className="text-slate-500 mt-2">Your results have been recorded.</p>
+            <div className="mt-8 bg-slate-100 p-6 rounded-lg inline-block">
+              <p className="text-xl font-semibold text-slate-700">{selectedAssessment.title}</p>
+              <p className="text-4xl font-extrabold text-indigo-600 mt-2">{score}<span className="text-2xl text-slate-500">/100</span></p>
+            </div>
+            <button
+              onClick={() => navigate("/student-dashboard")}
+              className="mt-8 bg-indigo-600 text-white py-2 px-6 rounded-lg shadow-md hover:bg-indigo-700"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

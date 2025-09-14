@@ -1,20 +1,21 @@
-import React, { useState, useEffect, useContext } from 'react'
-import { fetchAssessmentDetails, fetchAssessments } from '../services/assessmentService.js'
-import { findUserbyId } from '../services/adminService.js'
-import AuthContext from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
-import { all } from 'axios'
 
+import React, { useState, useEffect, useContext } from 'react';
+import AuthContext from '../context/AuthContext';
+import { fetchAssessments, fetchAssessmentDetails } from '../services/assessmentService.js';
+import { findUserbyId } from '../services/adminService.js';
+import { useNavigate } from 'react-router-dom';
+import { AcademicCapIcon, UserCircleIcon, ClockIcon, UsersIcon } from '@heroicons/react/24/outline'; 
 
 const StudentDashboard = () => {
-
-  const { user, token,SelectedAssessment, setSelectedAssessment } = useContext(AuthContext);
+    
+  const { user, token, setSelectedAssessment } = useContext(AuthContext);
   const [allAssessments, setallAssessments] = useState([]);
   const [creatorNames, setCreatorNames] = useState({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
+    
+      useEffect(() => {
     if (!token) {
       console.error("No token available, cannot fetch assessments.");
       return;
@@ -25,16 +26,15 @@ const StudentDashboard = () => {
       try {
         setLoading(true);
         const data = await fetchAssessments(token);
-        console.log("Fetched all-assessments are as follows in studentDashboard:", data); // Debugging log
         if (Array.isArray(data)) {
           setallAssessments(data);
           await fetchCreatorNames(data);
         } else {
-          setallAssessments([]); // Fallback to prevent errors
+          setallAssessments([]); 
         }
       } catch (error) {
         console.error("Failed to fetch assessments", error);
-        setallAssessments([]); // Ensure assessments is an array
+        setallAssessments([]); 
       } finally {
         setLoading(false);
       }
@@ -43,7 +43,6 @@ const StudentDashboard = () => {
     if (token) getallAssessments();
   }, [token]);
 
-  // Function to fetch creator names for all assessments
   const fetchCreatorNames = async (assessments) => {
     const names = {};
     await Promise.all(
@@ -53,7 +52,7 @@ const StudentDashboard = () => {
         if (user && user.name) {
           names[assessment.creator] = user.name;
         } else {
-          names[assessment.creator] = "Unknown"; // Fallback if user not found
+          names[assessment.creator] = "Unknown";
         }
       })
     );
@@ -64,7 +63,6 @@ const StudentDashboard = () => {
     setLoading(true);
     try {
       const details = await fetchAssessmentDetails(assessmentId, token);
-      console.log("these are details of selected assessment: ", details)
       setSelectedAssessment(details);
       localStorage.setItem("selectedAssessment", JSON.stringify(details));
       navigate("/assessment-page")
@@ -77,39 +75,68 @@ const StudentDashboard = () => {
   };
 
 
-
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="bg-slate-50 min-h-screen">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Dashboard Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-800">Welcome, {user?.name}!</h1>
+          <p className="text-slate-500 mt-1">Here are the assessments available for you.</p>
+        </div>
 
-      <h1 className="text-2xl font-bold">Welcome, Student {user?.name}!</h1>
-      <h2 className="text-xl font-semibold mt-6">All Available Assessments</h2>
+        {/* Loading Spinner or Message */}
+        {loading ? (
+          <div className="text-center py-10">
+            <p className="text-indigo-600">Loading Assessments...</p>
+          </div>
+        ) : allAssessments.length > 0 ? (
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {allAssessments.map((assessment) => (
+              
+              <div
+                key={assessment._id}
+                className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 flex flex-col justify-between transition-transform transform hover:-translate-y-1"
+              >
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                     <AcademicCapIcon className="w-8 h-8 text-indigo-500" />
+                     <h3 className="text-xl font-bold text-slate-800">{assessment.title}</h3>
+                  </div>
+                  <p className="text-slate-500 text-sm mb-4">{assessment.description}</p>
+                  
+                  {/* Meta Information with Icons */}
+                  <div className="space-y-2 text-sm text-slate-600 border-t pt-4">
+                     <p className="flex items-center gap-2">
+                        <UserCircleIcon className="w-5 h-5 text-slate-400" />
+                        Created by: <span className="font-semibold text-indigo-600">{creatorNames[assessment.creator]}</span>
+                     </p>
+                     <p className="flex items-center gap-2">
+                        <UsersIcon className="w-5 h-5 text-slate-400" />
+                        Attempted by: <span className="font-semibold">{assessment.attempts.length} students</span>
+                     </p>
+                  </div>
+                </div>
 
-      {loading ? (
-        <p>Loading...</p>
-      ) : allAssessments.length > 0 ? (
-        <ul className="mt-4">
-          {allAssessments.map((assessment) => (
-            <li
-              key={assessment?._id}
-              className="p-4 border rounded hover:bg-blue-100 my-2 bg-blue-50 flex flex-row justify-between items-center"
-            >
-              <div>
-                <h3 className="font-bold">{assessment.title}</h3>
-                <h1 className='font-semibold text-black text-lg'> BY:
-                  <p className='font-semibold text-blue-500 text-lg inline'> {creatorNames[assessment.creator]}</p>
-                </h1>
-                <p>Description: {assessment.description}</p>
-                <p className="text-gray-600">Attempted by: {assessment.attempts.length} students</p>
+                {/* Action Button */}
+                <button 
+                  className="mt-6 w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-green-600 transition-all duration-300"
+                  onClick={() => TakeAssessmentClickHandler(assessment?._id)}
+                >
+                  Take Assessment
+                </button>
               </div>
-              <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-all" onClick={() => TakeAssessmentClickHandler(assessment?._id)}>Take Assessment</button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No assessments found. Start creating your assessments!</p>
-      )}
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 bg-white rounded-xl shadow-md">
+            <h2 className="text-xl font-semibold text-slate-700">No Assessments Found</h2>
+            <p className="text-slate-500 mt-2">Check back later for new assessments!</p>
+          </div>
+        )}
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default StudentDashboard
+export default StudentDashboard;
