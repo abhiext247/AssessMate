@@ -1,4 +1,3 @@
-
 import { useState, useContext } from "react";
 import AuthContext from "../context/AuthContext";
 import { createAssessment } from "../services/assessmentService.js";
@@ -12,14 +11,69 @@ const CreateAssessment = () => {
   const [description, setDescription] = useState("");
   const [timeLimit, setTimeLimit] = useState("");
   const [questions, setQuestions] = useState([]);
+  
+  // State for the current question being added
   const [questionText, setQuestionText] = useState("");
   const [options, setOptions] = useState(["", "", "", ""]);
   const [correctAnswer, setCorrectAnswer] = useState("");
+  
   const navigate = useNavigate();
   
-  const handleAddQuestion = () => { };
-  const handleRemoveQuestion = (index) => { };
-  const handleSubmit = async (e) => { };
+  
+  const handleAddQuestion = () => { 
+    // Validation: Ensure all fields are filled
+    if (!questionText.trim() || options.some(opt => !opt.trim()) || !correctAnswer) {
+      alert("Please fill in the question, all 4 options, and select a correct answer.");
+      return;
+    }
+
+    const newQuestion = {
+      questionText,
+      options,
+      correctAnswer
+    };
+
+    setQuestions([...questions, newQuestion]);
+
+    // Reset fields for next question
+    setQuestionText("");
+    setOptions(["", "", "", ""]);
+    setCorrectAnswer("");
+  };
+
+  
+  const handleRemoveQuestion = (index) => { 
+    const updatedQuestions = questions.filter((_, i) => i !== index);
+    setQuestions(updatedQuestions);
+  };
+
+  
+  const handleSubmit = async (e) => { 
+    e.preventDefault();
+
+    if (!title || !description || !timeLimit || questions.length === 0) {
+      alert("Please fill in all assessment details and add at least one question.");
+      return;
+    }
+
+    const assessmentData = {
+      title,
+      description,
+      timeLimit: Number(timeLimit),
+      questions,
+      creator: user._id // Assuming user object has _id
+    };
+
+    try {
+      // Assuming createAssessment takes (data, token)
+      await createAssessment(assessmentData, user.token); 
+      alert("Assessment created successfully!");
+      navigate('/creator-dashboard'); // Redirect after success
+    } catch (error) {
+      console.error("Error creating assessment:", error);
+      alert("Failed to create assessment.");
+    }
+  };
   
   return (
     <div className="bg-slate-50 min-h-screen py-10">
@@ -45,18 +99,35 @@ const CreateAssessment = () => {
             <h2 className="text-2xl font-semibold text-slate-700 mb-4">Add Questions</h2>
             <div className="space-y-3">
               <input type="text" placeholder="Question Text" className="w-full p-3 border rounded-lg" value={questionText} onChange={(e) => setQuestionText(e.target.value)} />
-              {options.map((option, index) => ( <input key={index} type="text" placeholder={`Option ${index + 1}`} className="w-full p-3 border rounded-lg" value={option} onChange={(e) => { const newOptions = [...options]; newOptions[index] = e.target.value; setOptions(newOptions); }} /> ))}
+              
+              {/* Option Inputs */}
+              {options.map((option, index) => ( 
+                <input 
+                  key={index} 
+                  type="text" 
+                  placeholder={`Option ${index + 1}`} 
+                  className="w-full p-3 border rounded-lg" 
+                  value={option} 
+                  onChange={(e) => { 
+                    const newOptions = [...options]; 
+                    newOptions[index] = e.target.value; 
+                    setOptions(newOptions); 
+                  }} 
+                /> 
+              ))}
+
               <select className="w-full p-3 border rounded-lg bg-white" value={correctAnswer} onChange={(e) => setCorrectAnswer(e.target.value)} >
                 <option value="">Select the Correct Answer</option>
                 {options.map((opt, index) => ( opt && <option key={index} value={opt}>{opt}</option> ))}
               </select>
             </div>
+            
             <button type="button" onClick={handleAddQuestion} className="mt-4 inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700">
               <PlusIcon className="w-5 h-5"/> Add Question
             </button>
           </div>
           
-          {/* Section 3: Added Questions */}
+          {/* Section 3: Added Questions List */}
           {questions.length > 0 && (
             <div className="bg-white p-6 rounded-xl shadow-lg border border-slate-200">
               <h2 className="text-2xl font-semibold text-slate-700 mb-4">Added Questions ({questions.length})</h2>
